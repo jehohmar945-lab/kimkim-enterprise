@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kimkim Enterprise</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    position: relative;
+    background: #050505;
+    color: #ffffff;
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 48px 20px 32px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  /* Rich dark backdrop with a soft gold glow */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(circle at 50% 42%, rgba(212, 175, 90, 0.12) 0%, transparent 45%),
+      radial-gradient(circle at 50% 100%, #111111 0%, #050505 60%, #000000 100%);
+  }
+
+  /* Faint gold-tinted grid texture */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgba(212, 175, 90, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212, 175, 90, 0.035) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(circle at 50% 40%, black, transparent 65%);
+    -webkit-mask-image: radial-gradient(circle at 50% 40%, black, transparent 65%);
+  }
+
+  /* ===== Top: Title ===== */
+  .brand-title {
+    animation: fadeDown 0.7s ease both;
+  }
+
+  h1 {
+    font-size: 2.6rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #f6e2a4, #d4af5a 45%, #b8862f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 40px rgba(212, 175, 90, 0.25);
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== Middle: Loader ===== */
+  .main-content {
+    margin: auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    animation: fadeUp 0.8s ease 0.15s both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .loader {
+    position: relative;
+    width: 58px;
+    height: 58px;
+  }
+
+  .loader span {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+  }
+
+  .loader span:nth-child(1) {
+    border-top-color: #e6c069;
+    border-right-color: rgba(230, 192, 105, 0.15);
+    animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+    filter: drop-shadow(0 0 6px rgba(230, 192, 105, 0.45));
+  }
+
+  .loader span:nth-child(2) {
+    inset: 11px;
+    border-bottom-color: #8a8a8a;
+    border-left-color: rgba(138, 138, 138, 0.15);
+    animation: spin 1.4s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite reverse;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .load-status {
+    font-size: 0.75rem;
+    color: #777777;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ===== Bottom: Footer ===== */
+  .footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.035);
+    padding: 12px 28px;
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(212, 175, 90, 0.18);
+    animation: fadeUp 0.8s ease 0.3s both;
+  }
+
+  .dev-credit {
+    font-size: 0.98rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: #d5d5d5;
+  }
+
+  .dev-name {
+    background: linear-gradient(135deg, #f4dc9c, #c9982f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .version-tag {
+    font-size: 0.68rem;
+    color: #555555;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="brand-title">
+    <h1>Kimkim Enterprise</h1>
+  </div>
+
+  <main class="main-content">
+    <div class="loader">
+      <span></span>
+      <span></span>
+    </div>
+    <p class="load-status" id="statusText">Loading</p>
+  </main>
+
+  <footer class="footer">
+    <p class="dev-credit">Developer: <span class="dev-name">Jeho</span></p>
+    <p class="version-tag">Version 1.0</p>
+  </footer>
+
+  <script>
+    const statusEl = document.getElementById('statusText');
+    let dots = 0;
+    setInterval(() => {
+      dots = (dots + 1) % 4;
+      statusEl.textContent = 'Loading' + '.'.repeat(dots);
+    }, 450);
+
+    setTimeout(() => {
+      window.location.replace("homepage.html");
+    }, 3600);
+  </script>
+
+</body>
+</html>
