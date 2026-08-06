@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #050505; color: #ffffff; padding-bottom: 90px; min-height: 100vh; }
+        
+        .search-container { padding: 18px 16px; background-color: rgba(15, 15, 15, 0.85); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(212, 175, 90, 0.15); backdrop-filter: blur(14px); }
+        .brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .brand-mark { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, #f1d385, #b8862f); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #050505; }
+        .brand-text { font-size: 1.05rem; font-weight: 800; color: #f6e2a4; }
+        
+        .search-wrapper { position: relative; width: 100%; }
+        .search-bar { width: 100%; padding: 13px 20px; font-size: 15px; color: #fff; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 25px; outline: none; }
+        
+        .suggestions-box {
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+            background-color: rgba(18, 18, 18, 0.95); backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 175, 90, 0.25); border-radius: 14px;
+            overflow: hidden; z-index: 200; display: none;
+        }
+        .suggestion-item { padding: 12px 18px; font-size: 14px; color: #e0e0e0; cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .suggestion-item:hover { background-color: rgba(212, 175, 90, 0.15); color: #f6e2a4; }
+
+        .categories-container { padding: 14px 16px; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; background-color: rgba(10, 10, 10, 0.6); border-bottom: 1px solid rgba(255, 255, 255, 0.06); scrollbar-width: none; }
+        .category-chip { padding: 8px 18px; background-color: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; font-size: 13.5px; font-weight: 600; color: #d5d5d5; cursor: pointer; flex-shrink: 0; }
+        .category-chip.active { background: linear-gradient(135deg, #f1d385, #b8862f); border-color: transparent; color: #050505; }
+
+        .items-grid { padding: 16px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        .item-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; position: relative; }
+        
+        .item-img-box { width: 100%; height: 120px; border-radius: 10px; overflow: hidden; background: #121212; position: relative; }
+        .item-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .item-category { font-size: 11px; text-transform: uppercase; color: #d4af5a; font-weight: 700; display: block; }
+        
+        /* Enlarged typography */
+        .item-name { font-size: 16px; font-weight: 700; color: #ffffff; line-height: 1.3; }
+        
+        /* Red price styling & larger size */
+        .item-price { font-size: 18px; font-weight: 900; color: #ff3b30; margin-top: auto; }
+        
+        .card-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .btn-edit { background: rgba(212, 175, 90, 0.15); color: #f1d385; border: 1px solid rgba(212, 175, 90, 0.3); padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+        
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #aaaaaa; font-size: 14px; }
+        
+        .footer-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: rgba(12, 12, 12, 0.85); border-top: 1px solid rgba(212, 175, 90, 0.15); display: flex; justify-content: space-around; align-items: center; padding: 0 16px; gap: 12px; z-index: 1000; }
+        .footer-btn { flex: 1; padding: 12px 16px; border-radius: 12px; font-weight: 700; text-decoration: none; text-align: center; color: #050505; background: linear-gradient(135deg, #f1d385, #b8862f); border: none; cursor: pointer; font-size: 14px; }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <header class="search-container">
+        <div class="brand-row">
+            <div class="brand-mark">K</div>
+            <span class="brand-text">Kimkim Enterprise</span>
+        </div>
+        <div class="search-wrapper">
+            <input type="text" class="search-bar" id="searchInput" placeholder="Search items..." autocomplete="off">
+            <div class="suggestions-box" id="suggestionsBox"></div>
+        </div>
+    </header>
+
+    <section class="categories-container" id="categoryContainer">
+        <button class="category-chip active" data-cat="all">All</button>
+        <button class="category-chip" data-cat="slipper">#1 slipper</button>
+        <button class="category-chip" data-cat="plastic">#2 plastic</button>
+        <button class="category-chip" data-cat="thawmhnaw">#3 thawmhnaw</button>
+        <button class="category-chip" data-cat="toys">#4 Toys</button>
+    </section>
+
+    <main class="items-grid" id="itemsContainer">
+        <p class="empty-state">Loading items...</p>
+    </main>
+
+    <footer class="footer-nav">
+        <button class="footer-btn" id="protectedAddBtn">Add Item</button>
+    </footer>
+
+    <script>
+        // MASTER ADMIN PASSWORD
+        const ADMIN_PASSWORD = "1234"; // Change this to your preferred passcode
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCizYkL6CvN5DggN1N4Wy-p_q55a6UEDhs",
+            authDomain: "kimkim-enterprise-c10d6.firebaseapp.com",
+            projectId: "kimkim-enterprise-c10d6",
+            storageBucket: "kimkim-enterprise-c10d6.firebasestorage.app",
+            messagingSenderId: "107286919434",
+            appId: "1:107286919434:web:d3f50a834c5bdc8c41a2f3"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let allItems = [];
+        let currentCategory = 'all';
+
+        function cleanText(txt) {
+            return (txt || '').toLowerCase().trim();
+        }
+
+        // 1. Password Protection Manager
+        function checkPassword(actionCallback) {
+            const pass = prompt("Enter Admin Password:");
+            if (pass === ADMIN_PASSWORD) {
+                actionCallback();
+            } else if (pass !== null) {
+                alert("Incorrect password! Access denied.");
+            }
+        }
+
+        document.getElementById('protectedAddBtn').addEventListener('click', () => {
+            checkPassword(() => {
+                window.location.href = "add.html";
+            });
+        });
+
+        // 2. Fetch & Render Data
+        function loadItems() {
+            db.collection("items").get().then((snapshot) => {
+                allItems = [];
+                snapshot.forEach(doc => {
+                    allItems.push({ id: doc.id, ...doc.data() });
+                });
+                filterAndDisplay();
+            }).catch(err => {
+                document.getElementById('itemsContainer').innerHTML = `<p class="empty-state" style="color:red;">Error: ${err.message}</p>`;
+            });
+        }
+
+        function renderGrid(items) {
+            const container = document.getElementById('itemsContainer');
+            if (items.length === 0) {
+                container.innerHTML = `<p class="empty-state">No items found</p>`;
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="item-card">
+                    <a href="viewitem.html?id=${item.id}" style="text-decoration:none; color:inherit;">
+                        <div class="item-img-box">
+                            <img src="${item.imageUrl || 'https://via.placeholder.com/150'}" alt="${item.name}">
+                        </div>
+                        <span class="item-category">${item.category || 'General'}</span>
+                        <h3 class="item-name">${item.name || 'Unnamed Item'}</h3>
+                        <div class="item-price">₹${item.price ?? 0}</div>
+                    </a>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick="handleEdit('${item.id}', '${item.name || ''}', ${item.price || 0})">Edit</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 3. Edit Handler with Password Prompt
+        window.handleEdit = function(id, currentName, currentPrice) {
+            checkPassword(() => {
+                const newName = prompt("Edit Item Name:", currentName);
+                if (newName === null) return;
+
+                const newPrice = prompt("Edit Price (₹):", currentPrice);
+                if (newPrice === null) return;
+
+                db.collection("items").doc(id).update({
+                    name: newName.trim(),
+                    price: Number(newPrice)
+                }).then(() => {
+                    alert("Item updated successfully!");
+                    loadItems();
+                }).catch(err => alert("Failed to update: " + err.message));
+            });
+        };
+
+        // 4. Real-Time Search & Category Filters
+        function filterAndDisplay() {
+            const query = cleanText(document.getElementById('searchInput').value);
+            const selectedCat = cleanText(currentCategory);
+
+            const filtered = allItems.filter(item => {
+                const name = cleanText(item.name);
+                const cat = cleanText(item.category);
+
+                const matchesCat = selectedCat === 'all' || cat.includes(selectedCat) || selectedCat.includes(cat);
+                const matchesSearch = !query || name.includes(query) || cat.includes(query);
+
+                return matchesCat && matchesSearch;
+            });
+
+            renderGrid(filtered);
+        }
+
+        // Search Input & Suggestions Event Listeners
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsBox = document.getElementById('suggestionsBox');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = cleanText(e.target.value);
+            filterAndDisplay();
+
+            if (!query) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+
+            const matches = allItems.filter(i => cleanText(i.name).includes(query));
+            if (matches.length > 0) {
+                suggestionsBox.innerHTML = matches.slice(0, 4).map(i => `
+                    <div class="suggestion-item" onclick="selectSuggestion('${i.name}')">${i.name}</div>
+                `).join('');
+                suggestionsBox.style.display = 'block';
+            } else {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        window.selectSuggestion = function(name) {
+            searchInput.value = name;
+            suggestionsBox.style.display = 'none';
+            filterAndDisplay();
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-wrapper')) suggestionsBox.style.display = 'none';
+        });
+
+        document.getElementById('categoryContainer').addEventListener('click', (e) => {
+            const chip = e.target.closest('.category-chip');
+            if (!chip) return;
+            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            currentCategory = chip.getAttribute('data-cat');
+            filterAndDisplay();
+        });
+
+        // Initialize on load
+        loadItems();
+    </script>
+</body>
+</html>
